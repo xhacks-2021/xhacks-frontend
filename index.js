@@ -1,5 +1,5 @@
 //Question generator
-function genQuestion(inString){  
+function genQuestion(inString){
 
 
   return;
