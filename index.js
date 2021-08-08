@@ -18,34 +18,27 @@ function start() {
           pagesPromises.push(getPageText(pageNumber, pdf));
         })(i + 1);
       }
-      Promise.all(pagesPromises).then(function (pagesText) {
+      Promise.all(pagesPromises).then(async function (pagesText) {
         // join page strings
         pagesText = pagesText.join(' ');
 
         // Display text of all the pages in the console
-        console.log(pagesText);
+        // console.log(pagesText);
 
         // TODO: call question api
-        let questions = {
-          "questions": [
-            {
-              "answer": "Immanuel Kant",
-              "question": "Who is the central figure in modern philosophy?"
-            },
-            {
-              "answer": "1724–1804",
-              "question": "When was Immanuel Kant born?"
-            },
-            {
-              "answer": "rationalism and empiricism",
-              "question": "What did Kant synthesize in early modern philosophy?"
-            }
-          ],
-          "text": "Immanuel Kant (1724–1804) is the central figure in modern philosophy. He synthesized early modern rationalism and empiricism, set the terms for much of nineteenth and twentieth century philosophy, and continues to exercise a significant influence today in metaphysics, epistemology, ethics, political philosophy, aesthetics, and other fields."
-        };
 
         // call relevance api
-        post("https://xhacks-2021.herokuapp.com/is-relevant", questions);
+
+        let result = post("https://xhacks-2021.herokuapp.com/is-relevant", testQuestions);
+        result
+          .then(data => {
+            const maxQuestions = Math.min(document.getElementById('max-questions').value, data.length);
+            console.log("Success: ", tocsv(filterQuestions(data, maxQuestions)));
+            download("questions.csv", tocsv(filterQuestions(data, maxQuestions)));
+          })
+          .catch(err => {
+            console.log("Error: ", err);
+          });
       });
 
     }, function (reason) {
@@ -86,20 +79,51 @@ function getPageText(pageNum, PDFDocumentInstance) {
   });
 }
 
+function filterQuestions(questions, n) {
+  return {
+    length: n,
+    relevances: questions['relevances'].slice(0, n)
+  }
+}
+
 // sends a post request using an endpoint and json body
 function post(endpoint, body) {
-  fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
+  return new Promise((resolve, reject) => {
+    fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+    .then(response => response.json())
+    .then(data => {
+      resolve(data);
+    })
+    .catch(error => {
+      reject(error);
+    });
   })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Success:', data);
-  })
-  .catch((error) => {
-    console.error('Error:', error);
-  });
+}
+
+// converts json to csv
+function tocsv(json) {
+  return json['relevances'].reduce((acc, {question, answer}) => {
+    return acc + question + ',' + answer + '\r\n';
+  }, '');
+}
+
+// downloads a text file
+// Credit: https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
+function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
 }
