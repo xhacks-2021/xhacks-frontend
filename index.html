@@ -17,19 +17,21 @@
     <div class="card">
       <img src="./assets/Logo.png" class="logo" alt="Logo" />
       <h1>Study++</h1>
-      <h2>Study easily</h2>
+      <h2>Study Easily.</h2>
       <div class="hr"></div>
       <p>Upload a PDF; we'll remodel it into study cards.</p>
+      <label>Max Questions:</label><input type="number" min="1" max="100" value="2" id="max-questions" />
       <div class="upload">
         <div>
           <input type="file" id="avatar" name="avatar" accept="application/pdf" onchange="start()">
-          <span class="display-text">Upload</span>
+          <span id="display-text">Upload</span>
         </div>
     </div>
     </div>
   </body>
 
   <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+  <script src="testQuestions.js"></script>
   <script src="index.js"></script>
 
 </html>
